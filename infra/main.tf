@@ -4,6 +4,10 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 4.0"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 
   backend "s3" {
@@ -17,6 +21,81 @@ terraform {
 
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
+}
+
+provider "aws" {
+  region = "us-west-2"
+}
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+}
+
+resource "aws_iam_role" "github_actions" {
+  name        = "GitHubActions-github-hook"
+  description = "GitHub Actions role for github-hook — Terraform state access only"
+
+  max_session_duration = 3600
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:hannahscovill/github-hook:*"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "terraform_state" {
+  name = "TerraformStateAccess"
+  role = aws_iam_role.github_actions.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3State"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+          "s3:GetBucketVersioning",
+        ]
+        Resource = [
+          "arn:aws:s3:::orchestra-tfstate-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::orchestra-tfstate-${data.aws_caller_identity.current.account_id}/*",
+        ]
+      },
+      {
+        Sid    = "DynamoLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+        ]
+        Resource = "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/orchestra-terraform-locks"
+      },
+    ]
+  })
+}
+
+output "github_actions_role_arn" {
+  description = "Set this as AWS_OIDC_ROLE_ARN in GitHub Actions variables"
+  value       = aws_iam_role.github_actions.arn
 }
 
 locals {
