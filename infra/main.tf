@@ -6,11 +6,6 @@ terraform {
     }
   }
 
-  # Uncomment once you have a Terraform Cloud workspace:
-  # backend "remote" {
-  #   organization = "your-org"
-  #   workspaces { name = "github-webhook-agent" }
-  # }
 }
 
 provider "cloudflare" {
