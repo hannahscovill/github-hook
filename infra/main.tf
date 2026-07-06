@@ -6,6 +6,13 @@ terraform {
     }
   }
 
+  backend "s3" {
+    bucket         = "orchestra-tfstate-587838441384"
+    key            = "cloudflare/github-hook/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "orchestra-terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "cloudflare" {
