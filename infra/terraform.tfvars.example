@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars and fill in values (never commit terraform.tfvars)
+cloudflare_api_token = "your-cloudflare-api-token"
+domain               = "yourdomain.com"
+tunnel_secret        = "your-tunnel-secret"  # from ~/.cloudflared/*.json
