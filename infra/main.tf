@@ -64,19 +64,19 @@ resource "aws_iam_role_policy" "terraform_state" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "S3State"
+        Sid    = "S3StateBucket"
         Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket",
-          "s3:GetBucketVersioning",
-        ]
-        Resource = [
-          "arn:aws:s3:::terraform-state-calamari",
-          "arn:aws:s3:::terraform-state-calamari/*",
-        ]
+        Action = ["s3:ListBucket", "s3:GetBucketVersioning"]
+        Resource = "arn:aws:s3:::terraform-state-calamari"
+        Condition = {
+          StringLike = { "s3:prefix" = ["${local.state_prefix}/*"] }
+        }
+      },
+      {
+        Sid    = "S3StateObjects"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = "arn:aws:s3:::terraform-state-calamari/${local.state_prefix}/*"
       },
     ]
   })
@@ -88,10 +88,11 @@ output "github_actions_role_arn" {
 }
 
 locals {
-  account_id  = "0b6d074787cce9c80cdaf6c282d419d0"
-  tunnel_id   = "c86527c9-d108-4758-a493-ef42656cdcb8"
-  tunnel_name = "github-webhook-agent"
-  subdomain   = "agent"
+  account_id   = "0b6d074787cce9c80cdaf6c282d419d0"
+  tunnel_id    = "c86527c9-d108-4758-a493-ef42656cdcb8"
+  tunnel_name  = "github-webhook-agent"
+  subdomain    = "agent"
+  state_prefix = "github-hooks" # must match backend key prefix above
 }
 
 data "cloudflare_zone" "domain" {
