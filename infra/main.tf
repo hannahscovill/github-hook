@@ -30,8 +30,11 @@ data "cloudflare_zone" "domain" {
   name = var.domain
 }
 
-# This tunnel already exists — import it before applying:
-# terraform import cloudflare_zero_trust_tunnel_cloudflared.agent 0b6d074787cce9c80cdaf6c282d419d0/c86527c9-d108-4758-a493-ef42656cdcb8
+import {
+  to = cloudflare_zero_trust_tunnel_cloudflared.agent
+  id = "${local.account_id}/${local.tunnel_id}"
+}
+
 resource "cloudflare_zero_trust_tunnel_cloudflared" "agent" {
   account_id = local.account_id
   name       = local.tunnel_name
