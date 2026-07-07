@@ -28,10 +28,6 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
-}
-
 resource "aws_iam_role" "github_actions" {
   name        = "GitHubActions-github-hook"
   description = "GitHub Actions role for github-hook - Terraform state access only"
@@ -42,7 +38,7 @@ resource "aws_iam_role" "github_actions" {
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
+      Principal = { Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com" }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
@@ -101,7 +97,7 @@ data "cloudflare_zone" "domain" {
 
 # This tunnel already exists — import it before applying:
 # terraform import cloudflare_tunnel.agent 0b6d074787cce9c80cdaf6c282d419d0/c86527c9-d108-4758-a493-ef42656cdcb8
-resource "cloudflare_tunnel" "agent" {
+resource "cloudflare_zero_trust_tunnel_cloudflared" "agent" {
   account_id = local.account_id
   name       = local.tunnel_name
   secret     = var.tunnel_secret
@@ -125,7 +121,7 @@ resource "cloudflare_tunnel_config" "agent" {
 resource "cloudflare_record" "agent" {
   zone_id = data.cloudflare_zone.domain.id
   name    = local.subdomain
-  value   = "${local.tunnel_id}.cfargotunnel.com"
+  content = "${local.tunnel_id}.cfargotunnel.com"
   type    = "CNAME"
   proxied = true
 }
