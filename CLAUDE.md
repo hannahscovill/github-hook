@@ -8,7 +8,7 @@
 
 ## Secrets and sensitive files
 
-- Never commit `infra/terraform.tfvars` — it contains secrets.
+- Never create `infra/terraform.tfvars` — all secrets live in GitHub Actions secrets/variables.
 - Never commit `.cloudflared/` credentials.
 - Never log or print webhook secrets or signatures.
 
