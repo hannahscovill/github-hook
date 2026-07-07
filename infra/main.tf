@@ -34,7 +34,7 @@ data "aws_iam_openid_connect_provider" "github" {
 
 resource "aws_iam_role" "github_actions" {
   name        = "GitHubActions-github-hook"
-  description = "GitHub Actions role for github-hook — Terraform state access only"
+  description = "GitHub Actions role for github-hook - Terraform state access only"
 
   max_session_duration = 3600
 
