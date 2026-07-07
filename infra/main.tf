@@ -11,11 +11,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "orchestra-tfstate-587838441384"
-    key            = "cloudflare/github-hook/terraform.tfstate"
-    region         = "us-west-2"
-    dynamodb_table = "orchestra-terraform-locks"
-    encrypt        = true
+    bucket = "terraform-state-calamari"
+    key    = "github-hooks/terraform.tfstate"
+    region = "us-west-2"
+    encrypt = true
   }
 }
 
@@ -75,19 +74,9 @@ resource "aws_iam_role_policy" "terraform_state" {
           "s3:GetBucketVersioning",
         ]
         Resource = [
-          "arn:aws:s3:::orchestra-tfstate-${data.aws_caller_identity.current.account_id}",
-          "arn:aws:s3:::orchestra-tfstate-${data.aws_caller_identity.current.account_id}/*",
+          "arn:aws:s3:::terraform-state-calamari",
+          "arn:aws:s3:::terraform-state-calamari/*",
         ]
-      },
-      {
-        Sid    = "DynamoLock"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem",
-        ]
-        Resource = "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/orchestra-terraform-locks"
       },
     ]
   })
