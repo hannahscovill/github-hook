@@ -1,0 +1,49 @@
+name: Deploy Infra
+
+on:
+  push:
+    branches: [main]
+    paths: [infra/**]
+  workflow_dispatch:
+
+concurrency:
+  group: infra
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Init
+        run: terraform init
+
+      - name: Plan
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
+          TF_VAR_domain: ${{ vars.DOMAIN }}
+          TF_VAR_tunnel_secret: ${{ secrets.TUNNEL_SECRET }}
+
+      - name: Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CF_API_TOKEN }}
+          TF_VAR_domain: ${{ vars.DOMAIN }}
+          TF_VAR_tunnel_secret: ${{ secrets.TUNNEL_SECRET }}
