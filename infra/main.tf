@@ -54,6 +54,11 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "agent" {
   }
 }
 
+import {
+  to = cloudflare_record.agent
+  id = "764dd2c0471899336b7931dbda2f065d/787c58d9294b6eadf6d4152ae56cf10c"
+}
+
 resource "cloudflare_record" "agent" {
   zone_id = data.cloudflare_zone.domain.id
   name    = local.subdomain
