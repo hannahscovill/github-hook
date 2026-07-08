@@ -33,6 +33,11 @@ jobs:
       - name: Init
         run: terraform init
 
+      - name: Clean stale state
+        run: |
+          terraform state rm cloudflare_zero_trust_tunnel_cloudflared.agent || true
+          terraform state rm cloudflare_zero_trust_tunnel_cloudflared_config.agent || true
+
       - name: Plan
         run: terraform plan -out=tfplan
         env:

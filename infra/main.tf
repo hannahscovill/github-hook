@@ -20,7 +20,6 @@ provider "cloudflare" {
 
 locals {
   account_id   = "0b6d074787cce9c80cdaf6c282d419d0"
-  tunnel_id    = "c86527c9-d108-4758-a493-ef42656cdcb8"
   tunnel_name  = "github-webhook-agent"
   subdomain    = "agent"
   state_prefix = "github-hooks" # must match backend key prefix above
@@ -32,7 +31,7 @@ data "cloudflare_zone" "domain" {
 
 import {
   to = cloudflare_zero_trust_tunnel_cloudflared.agent
-  id = "${local.account_id}/${local.tunnel_id}"
+  id = "0b6d074787cce9c80cdaf6c282d419d0/c86527c9-d108-4758-a493-ef42656cdcb8"
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared" "agent" {
@@ -43,7 +42,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared" "agent" {
 
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "agent" {
   account_id = local.account_id
-  tunnel_id  = local.tunnel_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.agent.id
 
   config {
     ingress_rule {
@@ -59,7 +58,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "agent" {
 resource "cloudflare_record" "agent" {
   zone_id = data.cloudflare_zone.domain.id
   name    = local.subdomain
-  content = "${local.tunnel_id}.cfargotunnel.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.agent.id}.cfargotunnel.com"
   type    = "CNAME"
   proxied = true
 }
